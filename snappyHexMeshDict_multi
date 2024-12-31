@@ -1,0 +1,444 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |				
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9                                   	
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Which of the steps to run
+castellatedMesh true;
+snap            true;
+addLayers       true;
+
+geometry
+{
+    surfacemesh_multi.stl
+    {
+        type triSurfaceMesh;
+        name mixing_elbow; 
+
+        regions
+        {
+
+            pipe			// Named region in the STL file
+            {
+                name pipe;		// User-defined patch name
+            }
+
+            inlet1			// Named region in the STL file
+            {
+                name inlet1;		// User-defined patch name
+            }
+
+//small inlet
+            inlet2			// Named region in the STL file
+            {
+                name inlet2;		// User-defined patch name
+            }
+
+            outlet			// Named region in the STL file
+            {
+                name outlet;		// User-defined patch name
+            }
+        }
+    }
+
+/*
+    pipe.stl
+    {
+        type triSurfaceMesh;
+        name pipestl; 
+    }
+*/
+
+/*
+    smallpipe.stl
+    {
+        type triSurfaceMesh;
+        name smallpipestl; 
+    }
+*/
+
+//This is the name for patches for boundary layer (if not defined in regions)
+//mixing_elbow_inlet1 
+//For surface refinement need to use the name of the stl or region specific as inlet1
+
+};
+
+// Settings for the castellatedMesh generation.
+castellatedMeshControls
+{
+
+    // Refinement parameters
+    // ~~~~~~~~~~~~~~~~~~~~~
+
+    maxLocalCells 100000;
+
+    maxGlobalCells 20000000;
+
+    minRefinementCells 10;
+
+    maxLoadUnbalance 0.10;
+
+    nCellsBetweenLevels 3;	//2-3
+
+    // Explicit feature edge refinement
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    features
+    (
+        {
+            file "surfacemesh_multi.eMesh";
+            level 0;	//D
+            //level 4;	//solve small inlet surface mesh problems
+        }
+
+/*
+        {
+            file "pipering.eMesh";
+            level 4;	
+        }
+*/
+
+    );
+
+    // Surface based refinement
+    // ~~~~~~~~~~~~~~~~~~~~~~~~
+
+    refinementSurfaces
+    {
+        mixing_elbow
+        {
+	    // global
+            // Surface-wise min and max refinement level
+            //level (2 2);
+            level (1 1);
+            //level (0 0);
+
+		//Local surface in STL
+                regions
+		{
+                    pipe
+                    {
+                        //level (1 1);
+                        level (2 2);
+                        //level (4 4);
+
+           		patchInfo
+            		{
+                		type wall;
+            		}
+                    }
+		  
+/*
+		    inlet1
+                    {
+                        //level (2 2);
+                        level (4 4);
+
+           		patchInfo
+            		{
+                		type patch;
+            		}
+                    }
+*/
+
+/*
+		    inlet2
+                    {
+                        //level (2 2);
+                        level (4 4);
+
+           		patchInfo
+            		{
+                		type patch;
+            		}
+                    }
+
+*/
+
+/*
+		    outlet
+                    {
+                        //level (2 2);
+                        level (4 4);
+
+           		patchInfo
+            		{
+                		type patch;
+            		}
+                    }	 
+*/
+
+		  }
+
+        }
+
+/*
+        smallpipestl
+        {
+            level (4 4);
+        }
+*/
+
+            //- Optional increment (on top of max level) in small gaps
+            //gapLevelIncrement 2;
+
+    }
+
+    // Feature angle:
+    // - used if min and max refinement level of a surface differ
+    resolveFeatureAngle 30;		//recommended
+    //resolveFeatureAngle 60;		//To avoid too much refinement with curvature it also reoslve the feature edges		
+
+    //- Optional increment (on top of max level) in small gaps
+    //gapLevelIncrement 2;
+
+    // If not specified same as resolveFeatureAngle
+    planarAngle 30;
+
+    // Region-wise refinement
+    // ~~~~~~~~~~~~~~~~~~~~~~
+
+    refinementRegions
+    {
+
+//Refinement regions use the name of the whole STL
+//It does not take sub-regions
+//In this case pipe is not valid it only can use mixing_elbow
+//If you need to use an specific region you will need to create a separate STL
+/*
+        mixing_elbow
+        {
+            mode distance;
+            //levels ((0.1 0));
+            levels ((0.1 2));
+            //levels ((0.1 4));
+        }
+*/
+
+/*
+        pipestl
+        {
+            mode distance;
+            levels ((0.1 2));
+        }
+*/
+
+/*
+        smallpipestl
+        {
+            mode distance;
+            levels ((0.05 4));
+        }
+*/
+
+    }
+
+    // Mesh selection
+    // ~~~~~~~~~~~~~~
+
+    locationInMesh (2 0.5 0); 
+
+    allowFreeStandingZoneFaces true;
+
+}
+
+// Settings for the snapping.
+snapControls
+{
+
+//Too much smoothing iterations can have negative impact on the snapping
+//Use carefully.  Use the recommended value for must odf the times
+    nSmoothPatch 3;	//recommended
+    //nSmoothPatch 10;	//improved-use with care
+
+//Smaller values deteriorate the mesh
+//Larger values do not have nuch influence
+//Use the recommended one
+    tolerance 2.0;	//recommended
+    //tolerance 1.0;
+    //tolerance 0.2;	
+
+    nSolveIter 30;	//recommended
+    //nSolveIter 100;	//improved
+
+    nRelaxIter 5;	//recommended
+    //nRelaxIter 10;	//improved	10-20-50
+
+    // Feature snapping
+
+        nFeatureSnapIter 10;		//recommended
+        //nFeatureSnapIter 100;		//improved	20-50-100
+
+        implicitFeatureSnap false;
+
+        explicitFeatureSnap true;
+
+        multiRegionFeatureSnap false;
+
+}
+
+// Settings for the layer addition.
+addLayersControls
+{
+    relativeSizes true;
+
+        // Expansion factor for layer mesh
+        //expansionRatio 1.0;
+        expansionRatio 1.2;
+
+        finalLayerThickness 0.5;
+
+        //firstLayerThickness 0.1;
+
+        //thickness 0.5
+
+    //minThickness 0.25;
+    minThickness 0.1;
+
+    layers
+    {
+/*
+        mixing_elbow_inlet1
+        {
+            nSurfaceLayers 3;
+	}
+        mixing_elbow_inlet2
+        {
+            nSurfaceLayers 3;
+	}
+        mixing_elbow_outlet
+        {
+            nSurfaceLayers 3;
+        }
+        mixing_elbow_pipe
+        {
+            nSurfaceLayers 3;
+	}
+*/
+
+/*
+        mixing_elbow_.*
+        {
+            nSurfaceLayers 3;
+	}
+*/
+
+        pipe
+        {
+            nSurfaceLayers 3;
+	}
+
+/*
+        smallpipestl
+        {
+            nSurfaceLayers 3;
+	}
+*/
+
+    }
+
+    nGrow 0;
+
+    // Advanced settings
+
+    // Static analysis of starting mesh
+
+        // When not to extrude surface. 0 is flat surface, 90 is when two faces
+        // are perpendicular
+        //featureAngle 0;		//no inflation
+        featureAngle 130;		//recommended
+        //featureAngle 330;		//improved
+
+        // Stop layer growth on highly warped cells
+        maxFaceThicknessRatio 0.5;
+
+    // Patch displacement
+
+        // Number of smoothing iterations of surface normals
+        nSmoothSurfaceNormals 1;
+
+        // Smooth layer thickness over surface patches
+        nSmoothThickness 10;
+
+    // Medial axis analysis
+
+        minMedialAxisAngle 90;
+        minMedianAxisAngle 90;
+
+        maxThicknessToMedialRatio 0.3;
+
+        nSmoothNormals 3;
+
+    // Mesh shrinking
+
+        slipFeatureAngle 30;
+
+        nRelaxIter 5;
+
+        nBufferCellsNoExtrude 0;
+
+        nLayerIter 50;
+
+        nRelaxedIter 20;
+
+}
+
+
+meshQualityControls
+{
+    #include "meshQualityDict"
+
+    relaxed
+    {
+        // Maximum non-orthogonality allowed. Set to 180 to disable.
+        maxNonOrtho 75;
+    }
+
+    //minFlatness 0.5;
+
+    // Advanced
+
+        // Number of error distribution iterations
+        nSmoothScale 4;
+        // amount to scale back displacement at error points
+        errorReduction 0.75;
+}
+
+// Advanced
+
+//// Debug flags
+
+debugFlags
+(
+    //mesh            // write intermediate meshes
+    //intersections   // write current mesh intersections as .obj files
+    //featureSeeds    // write information about explicit feature edge refinement
+    //attraction      // write attraction as .obj files
+    //layerInfo       // write information about layers
+);
+
+
+//
+//// Write flags
+
+writeFlags
+(
+    //scalarLevels    // write volScalarField with cellLevel for postprocessing
+    //layerSets       // write cellSets, faceSets of faces in layer
+    //layerFields     // write volScalarField for layer coverage
+);
+
+
+mergeTolerance 1e-8;
+
+// ************************************************************************* //

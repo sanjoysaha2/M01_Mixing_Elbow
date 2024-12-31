@@ -1,0 +1,175 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |				
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9                                   	
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1;
+
+/*
+xmin -5.0;
+xmax  10.0;
+ymin -1.0;
+ymax  10.0;
+zmin -1.0;
+zmax  1.0;
+*/
+
+//Difference blockmes will have different effect on snapping
+//Advise to keep the blockmes tight and aligment with the stl
+//-0.6 good surface mesh in inlet2
+//-1.0 not so good surface mesh in inlet2
+//This sensitivity is particurlarly more sever with spacing 0.1 dx dy dz
+//-0.6 amd -.10 also have and effeect on the case with 0.1 in inlet 2 snapping and bl
+
+xmin -0.2;
+xmax  5.2;
+ymin -0.6;	//-0.6 or -1.0
+ymax  5.2;
+zmin -0.7;
+zmax  0.7;
+
+//xcells 150;
+//ycells 110;
+//zcells 20;
+
+lx #calc "$xmax - $xmin";
+//dx 0.1;
+dx 0.2;
+xcells #calc "abs(($lx)/($dx))";
+
+ly #calc "$ymax - $ymin";
+//dy 0.1;
+dy 0.2;
+//dy 0.18;	//almost flush with inlet2 surface
+ycells #calc "abs(($ly)/($dy))";
+
+lz #calc "$zmax - $zmin";
+//dz 0.1;
+dz 0.2;
+zcells #calc "abs(($lz)/($dz))";
+
+vertices        
+(
+    ($xmin  $ymin  $zmin)
+    ($xmax  $ymin  $zmin)
+    ($xmax  $ymax  $zmin)
+    ($xmin  $ymax  $zmin)
+    ($xmin  $ymin  $zmax)
+    ($xmax  $ymin  $zmax)
+    ($xmax  $ymax  $zmax)
+    ($xmin  $ymax  $zmax)
+);
+
+blocks          
+(
+    hex (0 1 2 3 4 5 6 7) ($xcells $ycells $zcells) simpleGrading (1 1 1)
+);
+
+edges           
+(
+);
+
+/*
+patches         
+(
+    patch minX
+    (
+        (0 4 7 3)
+    )
+    patch maxX
+    (
+        (2 6 5 1)
+    )
+    patch minY
+    (
+        (1 5 4 0)
+    )
+    patch maxY 
+    (
+        (3 7 6 2)
+    )
+    patch minZ
+    (
+        (0 3 2 1)
+    )
+    patch maxZ
+    (
+        (4 5 6 7)
+    )
+);
+*/
+
+boundary        
+(
+    minX
+    {
+        type patch;
+	faces
+	( 
+            (0 4 7 3)
+	);
+    }
+
+    maxX
+    {
+        type patch;
+	faces
+	( 
+            (2 6 5 1)
+	);
+    }
+
+    minY
+    {
+        type patch;
+	faces
+	( 
+            (1 5 4 0)
+	);
+    }
+
+    maxY 
+    {
+        type patch;
+	faces
+	( 
+            (3 7 6 2)
+	);
+    }
+
+    minZ
+    {
+        type patch;
+	faces
+	( 
+            (0 3 2 1)
+	);
+    }
+
+    maxZ
+    {
+        type patch;
+	faces
+	( 
+            (4 5 6 7)
+	);
+    }
+
+);
+
+
+mergePatchPairs 
+(
+);
+
+// ************************************************************************* //
